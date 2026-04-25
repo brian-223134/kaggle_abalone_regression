@@ -16,6 +16,7 @@
 | --- | --- | --- | --- |
 | `01_eda.ipynb` | 작성됨 | 데이터 품질, 타깃 분포, 상관관계, 이상치, train/test drift 확인 | EDA findings, 피처 엔지니어링 후보 |
 | `02_feature_engineering.ipynb` | 작성됨 | raw CSV를 v1 feature dataset으로 변환 | `../data/proceed/train_fe_v1.csv`, `../data/proceed/test_fe_v1.csv` |
+| `03_baseline.ipynb` | 작성됨 | v1 feature dataset 기준 baseline 모델 비교 | best baseline: `HistGradientBoosting_log_target`, OOF RMSLE `0.149919` |
 
 `01_eda.ipynb`에서 확인한 다음 모델링 방향은 아래와 같습니다.
 
@@ -77,9 +78,9 @@ v1 피처 구성:
 
 ### 3. `03_baseline.ipynb`
 
-`../data/proceed/train_fe_v1.csv`와 `../data/proceed/test_fe_v1.csv`를 입력으로 받아 baseline 성능을 측정합니다.
+작성 완료된 baseline 노트북입니다. `../data/proceed/train_fe_v1.csv`와 `../data/proceed/test_fe_v1.csv`를 입력으로 받아 baseline 성능을 측정합니다.
 
-권장 작업:
+수행 작업:
 
 - RMSLE metric 함수 구현
 - KFold 또는 StratifiedKFold-like split 구성
@@ -90,6 +91,21 @@ v1 피처 구성:
   - HistGradientBoostingRegressor
 - `Rings` 직접 예측과 `log1p(Rings)` 학습 후 `expm1` 복원 비교
 - feature v1의 CV RMSLE 기록
+- best baseline의 OOF prediction 오류 패턴 확인
+- holdout 기반 permutation importance 확인
+
+Baseline 결과:
+
+| 모델 | CV RMSLE mean | CV RMSLE std |
+| --- | ---: | ---: |
+| `HistGradientBoosting_log_target` | 0.149917 | 0.000889 |
+| `HistGradientBoosting` | 0.150623 | 0.000923 |
+| `RandomForest` | 0.151209 | 0.000756 |
+| `Ridge_log_target` | 0.158517 | 0.001720 |
+| `Ridge` | 0.159990 | 0.001744 |
+| `Dummy_median` | 0.286738 | 0.001278 |
+
+현재 best baseline은 `HistGradientBoosting_log_target`이며 OOF RMSLE는 `0.149919`입니다.
 
 ### 4. `04_modeling.ipynb`
 
@@ -117,4 +133,4 @@ baseline 이후 성능 개선 실험을 모읍니다.
 
 ## 다음 작업
 
-바로 다음에는 `03_baseline.ipynb`를 생성하는 것이 좋습니다. `../data/proceed/train_fe_v1.csv`와 `../data/proceed/test_fe_v1.csv`가 준비되었으므로, 이제 고정된 feature dataset을 기준으로 RMSLE baseline을 측정할 수 있습니다.
+바로 다음에는 `04_modeling.ipynb`를 생성하는 것이 좋습니다. 현재 best baseline인 `HistGradientBoosting_log_target`을 기준으로 feature v2, 이상치 처리, 모델 튜닝을 실험하면 됩니다.
