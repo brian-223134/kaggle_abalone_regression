@@ -1,10 +1,14 @@
 ## 환경 세팅 방법
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-
+```
 
 ## Directory 구성안
+
+```
 abalone-regression/
 ├── .venv/
 ├── data/
@@ -20,3 +24,4 @@ abalone-regression/
 ├── submissions/
 ├── requirements.txt
 └── README.md
+```
