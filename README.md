@@ -31,7 +31,10 @@ abalone-regression/
 │   ├── 01_eda.ipynb
 │   ├── 02_feature_engineering.ipynb
 │   ├── 03_baseline.ipynb
-│   └── 04_modeling.ipynb
+│   ├── 04_modeling.ipynb
+│   └── 05_submission.ipynb
+├── submissions/
+│   └── submission_v2_hgb_log_leaf45_clip.csv
 ├── requirements.txt
 └── README.md
 ```
@@ -44,7 +47,7 @@ abalone-regression/
 | Feature Engineering | `notebooks/02_feature_engineering.ipynb` | 완료 | `data/proceed/train_fe_v1.csv`, `data/proceed/test_fe_v1.csv` 생성 |
 | Baseline | `notebooks/03_baseline.ipynb` | 완료 | v1 feature dataset 기준 RMSLE baseline 측정 |
 | Modeling | `notebooks/04_modeling.ipynb` | 완료 | v2 feature dataset 생성 및 HGBR tuning |
-| Submission | `notebooks/05_submission.ipynb` | 예정 | 최종 test 예측 및 제출 파일 생성 |
+| Submission | `notebooks/05_submission.ipynb` | 완료 | 최종 test 예측 및 제출 파일 생성 |
 
 ## 현재 feature dataset
 
@@ -89,6 +92,16 @@ v1 피처는 원본 수치 피처, `Sex` one-hot encoding, `Volume`, `Density`, 
 
 현재 best modeling 후보는 `v2_hgb_log_leaf45_clip`이며 OOF RMSLE는 `0.149828`입니다.
 
+## 현재 submission
+
+`05_submission.ipynb`에서 최종 모델을 전체 train에 재학습해 제출 파일을 생성했습니다.
+
+| 파일 | rows | columns | 설명 |
+| --- | ---: | --- | --- |
+| `submissions/submission_v2_hgb_log_leaf45_clip.csv` | 60,411 | `id`, `Rings` | Kaggle 제출용 예측 파일 |
+
+제출 파일은 `sample_submission.csv`와 동일한 id 순서를 유지하며, 예측값에는 결측/무한대/음수 값이 없습니다.
+
 ## 다음 작업
 
-다음 단계는 `notebooks/05_submission.ipynb` 생성입니다. `data/proceed/train_fe_v2.csv`, `data/proceed/test_fe_v2.csv`를 사용하고, `v2_hgb_log_leaf45_clip` 설정으로 전체 train을 재학습한 뒤 제출 파일을 생성하면 됩니다.
+Kaggle에 `submissions/submission_v2_hgb_log_leaf45_clip.csv`를 제출한 뒤 public score를 기록합니다. 이후 개선은 public/private gap을 보며 feature v3, HGBR 추가 튜닝, 다른 부스팅 모델 비교 순서로 진행하면 됩니다.

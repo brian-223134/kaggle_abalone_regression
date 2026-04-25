@@ -18,6 +18,7 @@
 | `02_feature_engineering.ipynb` | 작성됨 | raw CSV를 v1 feature dataset으로 변환 | `../data/proceed/train_fe_v1.csv`, `../data/proceed/test_fe_v1.csv` |
 | `03_baseline.ipynb` | 작성됨 | v1 feature dataset 기준 baseline 모델 비교 | best baseline: `HistGradientBoosting_log_target`, OOF RMSLE `0.149919` |
 | `04_modeling.ipynb` | 작성됨 | v2 feature dataset 생성 및 HGBR tuning | best modeling: `v2_hgb_log_leaf45_clip`, OOF RMSLE `0.149828` |
+| `05_submission.ipynb` | 작성됨 | 최종 모델 재학습 및 Kaggle 제출 파일 생성 | `../submissions/submission_v2_hgb_log_leaf45_clip.csv` |
 
 `01_eda.ipynb`에서 확인한 다음 모델링 방향은 아래와 같습니다.
 
@@ -143,16 +144,22 @@ Modeling 결과:
 
 ### 5. `05_submission.ipynb`
 
-최종 모델로 test 예측을 만들고 Kaggle 제출 파일을 생성합니다.
+작성 완료된 submission 노트북입니다. 최종 모델로 test 예측을 만들고 Kaggle 제출 파일을 생성합니다.
 
-권장 작업:
+수행 작업:
 
 - 최종 모델 재학습
 - test prediction 생성
 - 음수 예측 방지: `np.clip(pred, 0, None)`
 - `sample_submission.csv` 형식 검증
-- `../submissions/submission_*.csv` 저장
+- `../submissions/submission_v2_hgb_log_leaf45_clip.csv` 저장
+
+생성된 제출 파일:
+
+| 파일 | rows | columns | 설명 |
+| --- | ---: | --- | --- |
+| `../submissions/submission_v2_hgb_log_leaf45_clip.csv` | 60,411 | `id`, `Rings` | Kaggle 제출용 예측 파일 |
 
 ## 다음 작업
 
-바로 다음에는 `05_submission.ipynb`를 생성하는 것이 좋습니다. `../data/proceed/train_fe_v2.csv`, `../data/proceed/test_fe_v2.csv`를 사용하고, `v2_hgb_log_leaf45_clip` 설정으로 전체 train을 재학습해 제출 파일을 만들면 됩니다.
+Kaggle에 `../submissions/submission_v2_hgb_log_leaf45_clip.csv`를 제출한 뒤 public score를 기록합니다. 이후 개선은 public/private gap을 보며 feature v3, HGBR 추가 튜닝, 다른 부스팅 모델 비교 순서로 진행하면 됩니다.
