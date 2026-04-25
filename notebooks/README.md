@@ -16,6 +16,9 @@
 | --- | --- | --- | --- |
 | `01_eda.ipynb` | 작성됨 | 데이터 품질, 타깃 분포, 상관관계, 이상치, train/test drift 확인 | EDA findings, 피처 엔지니어링 후보 |
 | `02_feature_engineering.ipynb` | 작성됨 | raw CSV를 v1 feature dataset으로 변환 | `../data/proceed/train_fe_v1.csv`, `../data/proceed/test_fe_v1.csv` |
+| `03_baseline.ipynb` | 작성됨 | v1 feature dataset 기준 baseline 모델 비교 | best baseline: `HistGradientBoosting_log_target`, OOF RMSLE `0.149919` |
+| `04_modeling.ipynb` | 작성됨 | v2 feature dataset 생성 및 HGBR tuning | best modeling: `v2_hgb_log_leaf45_clip`, OOF RMSLE `0.149828` |
+| `05_submission.ipynb` | 작성됨 | 최종 모델 재학습 및 Kaggle 제출 파일 생성 | `../submissions/submission_v2_hgb_log_leaf45_clip.csv` |
 
 `01_eda.ipynb`에서 확인한 다음 모델링 방향은 아래와 같습니다.
 
@@ -77,9 +80,9 @@ v1 피처 구성:
 
 ### 3. `03_baseline.ipynb`
 
-`../data/proceed/train_fe_v1.csv`와 `../data/proceed/test_fe_v1.csv`를 입력으로 받아 baseline 성능을 측정합니다.
+작성 완료된 baseline 노트북입니다. `../data/proceed/train_fe_v1.csv`와 `../data/proceed/test_fe_v1.csv`를 입력으로 받아 baseline 성능을 측정합니다.
 
-권장 작업:
+수행 작업:
 
 - RMSLE metric 함수 구현
 - KFold 또는 StratifiedKFold-like split 구성
@@ -90,31 +93,73 @@ v1 피처 구성:
   - HistGradientBoostingRegressor
 - `Rings` 직접 예측과 `log1p(Rings)` 학습 후 `expm1` 복원 비교
 - feature v1의 CV RMSLE 기록
+- best baseline의 OOF prediction 오류 패턴 확인
+- holdout 기반 permutation importance 확인
+
+Baseline 결과:
+
+| 모델 | CV RMSLE mean | CV RMSLE std |
+| --- | ---: | ---: |
+| `HistGradientBoosting_log_target` | 0.149917 | 0.000889 |
+| `HistGradientBoosting` | 0.150623 | 0.000923 |
+| `RandomForest` | 0.151209 | 0.000756 |
+| `Ridge_log_target` | 0.158517 | 0.001720 |
+| `Ridge` | 0.159990 | 0.001744 |
+| `Dummy_median` | 0.286738 | 0.001278 |
+
+현재 best baseline은 `HistGradientBoosting_log_target`이며 OOF RMSLE는 `0.149919`입니다.
 
 ### 4. `04_modeling.ipynb`
 
-baseline 이후 성능 개선 실험을 모읍니다.
+작성 완료된 modeling 노트북입니다. baseline 이후 성능 개선 실험을 모읍니다.
 
-권장 작업:
+수행 작업:
 
 - feature v2 후보 실험
 - 이상치 처리 전략 비교
 - 트리 기반 모델 하이퍼파라미터 튜닝
-- 앙상블 또는 stacking 검토
 - 최종 validation score와 선택 이유 기록
+- `../data/proceed/train_fe_v2.csv`, `../data/proceed/test_fe_v2.csv` 저장
+- best experiment의 OOF diagnostics, permutation importance, test prediction sanity check
+
+생성된 v2 feature dataset:
+
+| 파일 | shape | 설명 |
+| --- | ---: | --- |
+| `../data/proceed/train_fe_v2.csv` | 90,615 x 41 | `id` + 39개 피처 + `Rings` |
+| `../data/proceed/test_fe_v2.csv` | 60,411 x 40 | `id` + 39개 피처 |
+
+Modeling 결과:
+
+| 실험 | Feature set | CV RMSLE mean | CV RMSLE std |
+| --- | --- | ---: | ---: |
+| `v2_hgb_log_leaf45_clip` | v2 | 0.149826 | 0.000907 |
+| `v2_hgb_log_leaf45` | v2 | 0.149875 | 0.000856 |
+| `v1_hgb_log_baseline` | v1 | 0.149917 | 0.000889 |
+| `v2_hgb_log_lr0035_iter650` | v2 | 0.149947 | 0.000891 |
+| `v2_hgb_log_clip_005_995` | v2 | 0.149987 | 0.000932 |
+| `v2_hgb_log_baseline` | v2 | 0.150008 | 0.000911 |
+
+현재 best modeling 후보는 `v2_hgb_log_leaf45_clip`이며 OOF RMSLE는 `0.149828`입니다.
 
 ### 5. `05_submission.ipynb`
 
-최종 모델로 test 예측을 만들고 Kaggle 제출 파일을 생성합니다.
+작성 완료된 submission 노트북입니다. 최종 모델로 test 예측을 만들고 Kaggle 제출 파일을 생성합니다.
 
-권장 작업:
+수행 작업:
 
 - 최종 모델 재학습
 - test prediction 생성
 - 음수 예측 방지: `np.clip(pred, 0, None)`
 - `sample_submission.csv` 형식 검증
-- `../submissions/submission_*.csv` 저장
+- `../submissions/submission_v2_hgb_log_leaf45_clip.csv` 저장
+
+생성된 제출 파일:
+
+| 파일 | rows | columns | 설명 |
+| --- | ---: | --- | --- |
+| `../submissions/submission_v2_hgb_log_leaf45_clip.csv` | 60,411 | `id`, `Rings` | Kaggle 제출용 예측 파일 |
 
 ## 다음 작업
 
-바로 다음에는 `03_baseline.ipynb`를 생성하는 것이 좋습니다. `../data/proceed/train_fe_v1.csv`와 `../data/proceed/test_fe_v1.csv`가 준비되었으므로, 이제 고정된 feature dataset을 기준으로 RMSLE baseline을 측정할 수 있습니다.
+Kaggle에 `../submissions/submission_v2_hgb_log_leaf45_clip.csv`를 제출한 뒤 public score를 기록합니다. 이후 개선은 public/private gap을 보며 feature v3, HGBR 추가 튜닝, 다른 부스팅 모델 비교 순서로 진행하면 됩니다.
