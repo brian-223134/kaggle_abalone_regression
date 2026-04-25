@@ -17,6 +17,7 @@
 | `01_eda.ipynb` | 작성됨 | 데이터 품질, 타깃 분포, 상관관계, 이상치, train/test drift 확인 | EDA findings, 피처 엔지니어링 후보 |
 | `02_feature_engineering.ipynb` | 작성됨 | raw CSV를 v1 feature dataset으로 변환 | `../data/proceed/train_fe_v1.csv`, `../data/proceed/test_fe_v1.csv` |
 | `03_baseline.ipynb` | 작성됨 | v1 feature dataset 기준 baseline 모델 비교 | best baseline: `HistGradientBoosting_log_target`, OOF RMSLE `0.149919` |
+| `04_modeling.ipynb` | 작성됨 | v2 feature dataset 생성 및 HGBR tuning | best modeling: `v2_hgb_log_leaf45_clip`, OOF RMSLE `0.149828` |
 
 `01_eda.ipynb`에서 확인한 다음 모델링 방향은 아래와 같습니다.
 
@@ -109,15 +110,36 @@ Baseline 결과:
 
 ### 4. `04_modeling.ipynb`
 
-baseline 이후 성능 개선 실험을 모읍니다.
+작성 완료된 modeling 노트북입니다. baseline 이후 성능 개선 실험을 모읍니다.
 
-권장 작업:
+수행 작업:
 
 - feature v2 후보 실험
 - 이상치 처리 전략 비교
 - 트리 기반 모델 하이퍼파라미터 튜닝
-- 앙상블 또는 stacking 검토
 - 최종 validation score와 선택 이유 기록
+- `../data/proceed/train_fe_v2.csv`, `../data/proceed/test_fe_v2.csv` 저장
+- best experiment의 OOF diagnostics, permutation importance, test prediction sanity check
+
+생성된 v2 feature dataset:
+
+| 파일 | shape | 설명 |
+| --- | ---: | --- |
+| `../data/proceed/train_fe_v2.csv` | 90,615 x 41 | `id` + 39개 피처 + `Rings` |
+| `../data/proceed/test_fe_v2.csv` | 60,411 x 40 | `id` + 39개 피처 |
+
+Modeling 결과:
+
+| 실험 | Feature set | CV RMSLE mean | CV RMSLE std |
+| --- | --- | ---: | ---: |
+| `v2_hgb_log_leaf45_clip` | v2 | 0.149826 | 0.000907 |
+| `v2_hgb_log_leaf45` | v2 | 0.149875 | 0.000856 |
+| `v1_hgb_log_baseline` | v1 | 0.149917 | 0.000889 |
+| `v2_hgb_log_lr0035_iter650` | v2 | 0.149947 | 0.000891 |
+| `v2_hgb_log_clip_005_995` | v2 | 0.149987 | 0.000932 |
+| `v2_hgb_log_baseline` | v2 | 0.150008 | 0.000911 |
+
+현재 best modeling 후보는 `v2_hgb_log_leaf45_clip`이며 OOF RMSLE는 `0.149828`입니다.
 
 ### 5. `05_submission.ipynb`
 
@@ -133,4 +155,4 @@ baseline 이후 성능 개선 실험을 모읍니다.
 
 ## 다음 작업
 
-바로 다음에는 `04_modeling.ipynb`를 생성하는 것이 좋습니다. 현재 best baseline인 `HistGradientBoosting_log_target`을 기준으로 feature v2, 이상치 처리, 모델 튜닝을 실험하면 됩니다.
+바로 다음에는 `05_submission.ipynb`를 생성하는 것이 좋습니다. `../data/proceed/train_fe_v2.csv`, `../data/proceed/test_fe_v2.csv`를 사용하고, `v2_hgb_log_leaf45_clip` 설정으로 전체 train을 재학습해 제출 파일을 만들면 됩니다.
