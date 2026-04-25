@@ -21,13 +21,54 @@ $$
 
 작은 `Rings` 값에서의 상대 오차를 더 강하게 패널티하기 때문에, 어린 전복의 예측 정확도가 점수에 큰 영향을 줍니다.
 
-## 파일 구성
+## 디렉터리 구조
+
+```
+data/
+├── README.md
+├── raw/        # Kaggle에서 받은 원본 CSV (수정 금지, 읽기 전용으로 취급)
+│   ├── train.csv
+│   ├── test.csv
+│   └── sample_submission.csv
+└── proceed/    # 전처리·피처 엔지니어링 결과물 저장소
+    ├── train_*.csv
+    ├── test_*.csv
+    └── ...
+```
+
+- **`raw/`** — Kaggle에서 다운로드한 원본 그대로. 어떤 코드도 이 폴더의 파일을 덮어쓰지 않습니다. EDA·전처리 노트북은 항상 이 디렉터리에서 데이터를 읽어옵니다.
+- **`proceed/`** — 결측 처리, 인코딩, 스케일링, 파생 변수 생성 등 **피처 엔지니어링이 끝난 CSV** 가 저장되는 위치입니다. 모델 학습 스크립트는 원칙적으로 이 폴더의 파일을 입력으로 사용합니다.
+
+### `raw/` 원본 파일
 
 | 파일 | 행 수 (header 제외) | 설명 |
 | --- | ---: | --- |
-| `train.csv` | 90,615 | 학습용 데이터. 입력 피처 + 타깃(`Rings`) 포함 |
-| `test.csv` | 60,411 | 추론용 데이터. 타깃(`Rings`) 미포함 |
-| `sample_submission.csv` | 60,411 | 제출 파일 양식 (`id`, `Rings` 두 컬럼) |
+| `raw/train.csv` | 90,615 | 학습용 데이터. 입력 피처 + 타깃(`Rings`) 포함 |
+| `raw/test.csv` | 60,411 | 추론용 데이터. 타깃(`Rings`) 미포함 |
+| `raw/sample_submission.csv` | 60,411 | 제출 파일 양식 (`id`, `Rings` 두 컬럼) |
+
+### `proceed/` 가공 파일
+
+피처 엔지니어링 단계에서 생성되는 산출물을 저장합니다. 아직 비어 있으며, 작업이 진행되면서 채워집니다.
+
+권장 명명 규칙 (예시):
+
+| 파일 | 설명 |
+| --- | --- |
+| `proceed/train_fe_v1.csv` | v1 피처셋이 적용된 학습 데이터 (타깃 `Rings` 포함) |
+| `proceed/test_fe_v1.csv` | v1 피처셋이 적용된 테스트 데이터 (타깃 없음) |
+| `proceed/train_fe_v2.csv` | 추가 피처/다른 인코딩 등 v2 학습 데이터 |
+| `proceed/test_fe_v2.csv` | v2 테스트 데이터 |
+
+가공 파일에 일반적으로 포함되는 변환 예:
+
+- `Sex` 의 one-hot 인코딩 (`Sex_M`, `Sex_F`, `Sex_I`) 또는 ordinal 인코딩
+- `Whole weight.1`, `Whole weight.2` 등 헷갈리는 컬럼명을 `Shucked_weight`, `Viscera_weight` 로 rename
+- 파생 변수: `Volume = Length × Diameter × Height`, `Meat_ratio = Shucked_weight / Whole_weight`, `Shell_ratio = Shell_weight / Whole_weight` 등
+- 이상치 처리(`Height = 0` 행 등) 결과
+- 로그 변환 등 분포 보정 (`log1p(Rings)` 등)
+
+> **재현성 메모**: 새로운 피처셋을 만들 때마다 버전 suffix(`_v1`, `_v2`, ...)를 붙이고, 어떤 변환을 적용했는지 노트북/스크립트에 함께 기록해 두는 것을 권장합니다.
 
 ## 컬럼 설명
 
@@ -67,7 +108,7 @@ id,Rings
 ...
 ```
 
-- `id` 는 `test.csv` 의 `id` 와 동일해야 함.
+- `id` 는 `raw/test.csv` 의 `id` 와 동일해야 함.
 - `Rings` 는 정수가 아니어도 됨 (RMSLE 평가이므로 실수 예측값 그대로 제출).
 
 ## 참고 자료
