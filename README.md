@@ -2,6 +2,10 @@
 
 Kaggle Playground Series S4E4 Abalone 데이터셋으로 `Rings`를 예측하는 회귀 프로젝트입니다. 평가지표는 RMSLE이며, 원본 데이터 탐색, 피처 생성, baseline 검증, 모델링, 제출 파일 생성 순서로 진행합니다.
 
+최종적으로는 초기 HGBR 단일 모델의 OOF RMSLE `0.149828`에서, target encoding, UCI 원본 데이터 추가, LGBM/XGBoost/CatBoost 앙상블을 거쳐 OOF RMSLE `0.147529`까지 개선했습니다.
+
+발표 준비용 서술 자료는 [PRESENTATION.md](./PRESENTATION.md)에 정리했습니다.
+
 ## 환경 세팅 방법
 
 ```bash
@@ -10,17 +14,39 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+macOS에서 LightGBM import 시 `libomp.dylib` 오류가 나면 아래 런타임을 추가로 설치합니다.
+
+```bash
+brew install libomp
+```
+
 ## 재현 방법
 
-원본 Kaggle CSV는 `data/raw/`에 둔 상태에서 아래 순서로 노트북을 실행합니다.
+원본 Kaggle CSV는 `data/raw/`에 두고, UCI 원본 데이터는 `data/external/abalone.data`에 둔 상태에서 아래 순서로 실행합니다. `01`~`05`는 노트북이고, `06`~`08`은 반복 실행과 산출물 저장을 쉽게 하기 위한 Python percent-format 스크립트입니다.
 
 1. `notebooks/01_eda.ipynb`: 원본 데이터 품질, 타깃 분포, 상관관계, 이상치, train/test drift 확인
 2. `notebooks/02_feature_engineering.ipynb`: v1 feature dataset 생성
 3. `notebooks/03_baseline.ipynb`: v1 기준 baseline 모델 비교
 4. `notebooks/04_modeling.ipynb`: v2 feature dataset 생성, HGBR tuning, 최종 실험 후보 선택
-5. `notebooks/05_submission.ipynb`: 최종 모델 전체 train 재학습, test 예측, submission CSV 생성
+5. `notebooks/05_submission.ipynb`: HGBR 기준 submission CSV 생성
+6. `notebooks/06_target_encoding_lgbm.py`: OOF-safe target encoding과 LGBM 실험
+7. `notebooks/07_external_data_lgbm.py`: UCI 원본 데이터 결합 실험
+8. `notebooks/08_boosting_ensemble.py`: LGBM/XGBoost/CatBoost 앙상블
 
 `data/raw/`의 원본 파일은 수정하지 않고, 재사용 가능한 중간 산출물은 `data/proceed/`에 버전별 CSV로 저장합니다. `id`는 식별자이므로 학습 피처에서는 제외하고 제출 파일 생성 시에만 사용합니다.
+
+## 실험 설계 배경
+
+노트북과 스크립트는 한 번에 최고 점수를 맞히기 위해 만든 것이 아니라, 회귀 문제 해결 과정을 검증 가능한 단위로 쪼개기 위해 만들었습니다.
+
+1. `01_eda`에서 데이터와 metric의 성질을 먼저 확인했습니다.
+2. `02_feature_engineering`에서 재사용 가능한 첫 번째 피처셋을 만들었습니다.
+3. `03_baseline`에서 같은 fold와 같은 RMSLE 함수로 비교 기준선을 만들었습니다.
+4. `04_modeling`에서 HGBR 안에서 피처와 하이퍼파라미터를 개선했습니다.
+5. `05_submission`에서 모델 선택과 제출 파일 생성을 분리했습니다.
+6. `06` 이후는 상위권 풀이를 참고해 성능 개선 폭이 큰 방향인 target encoding, 외부 원본 데이터, boosting ensemble을 순차 검증했습니다.
+
+이렇게 나눈 이유는 각 단계의 질문이 다르기 때문입니다. EDA는 “무엇을 의심할 것인가”, feature engineering은 “어떤 정보를 숫자로 만들 것인가”, baseline은 “개선 기준은 무엇인가”, modeling은 “정말 성능이 좋아졌는가”, submission은 “형식과 재현성이 맞는가”를 담당합니다.
 
 ## Directory 구성
 
@@ -33,20 +59,31 @@ abalone-regression/
 │   │   ├── train.csv
 │   │   ├── test.csv
 │   │   └── sample_submission.csv
+│   ├── external/
+│   │   └── abalone.data
 │   └── proceed/
 │       ├── train_fe_v1.csv
 │       ├── test_fe_v1.csv
 │       ├── train_fe_v2.csv
-│       └── test_fe_v2.csv
+│       ├── test_fe_v2.csv
+│       ├── external_uci_fe_v2.csv
+│       └── oof/test prediction CSVs
 ├── notebooks/
 │   ├── README.md
 │   ├── 01_eda.ipynb
 │   ├── 02_feature_engineering.ipynb
 │   ├── 03_baseline.ipynb
 │   ├── 04_modeling.ipynb
-│   └── 05_submission.ipynb
+│   ├── 05_submission.ipynb
+│   ├── 06_target_encoding_lgbm.py
+│   ├── 07_external_data_lgbm.py
+│   └── 08_boosting_ensemble.py
 ├── submissions/
-│   └── submission_v2_hgb_log_leaf45_clip.csv
+│   ├── submission_v2_hgb_log_leaf45_clip.csv
+│   ├── submission_v3_lgbm_target_encoding.csv
+│   ├── submission_v4_lgbm_te_external.csv
+│   └── submission_v5_boosting_ensemble.csv
+├── PRESENTATION.md
 ├── requirements.txt
 └── README.md
 ```
@@ -60,6 +97,9 @@ abalone-regression/
 | Baseline | `notebooks/03_baseline.ipynb` | 완료 | v1 feature dataset 기준 RMSLE baseline 측정 |
 | Modeling | `notebooks/04_modeling.ipynb` | 완료 | v2 feature dataset 생성 및 HGBR tuning |
 | Submission | `notebooks/05_submission.ipynb` | 완료 | 최종 test 예측 및 제출 파일 생성 |
+| Target Encoding | `notebooks/06_target_encoding_lgbm.py` | 완료 | OOF-safe target encoding + LGBM |
+| External Data | `notebooks/07_external_data_lgbm.py` | 완료 | UCI 원본 데이터 결합 실험 |
+| Ensemble | `notebooks/08_boosting_ensemble.py` | 완료 | LGBM/XGBoost/CatBoost OOF ensemble |
 
 ## EDA 핵심 결론
 
@@ -82,6 +122,7 @@ abalone-regression/
 | `data/proceed/test_fe_v1.csv` | 60,411 x 18 | `id` + 17개 피처 |
 | `data/proceed/train_fe_v2.csv` | 90,615 x 41 | `id` + 39개 피처 + `Rings` |
 | `data/proceed/test_fe_v2.csv` | 60,411 x 40 | `id` + 39개 피처 |
+| `data/proceed/external_uci_fe_v2.csv` | 4,177 x 41 | UCI 원본 데이터에 v2 피처셋 적용 |
 
 v1 피처는 원본 수치 피처, `Sex` one-hot encoding, `Volume`, `Density`, weight ratio, `Height_is_zero` indicator를 포함합니다. v2는 여기에 shape ratio, component weight balance, log 피처를 추가합니다.
 
@@ -115,15 +156,27 @@ v1 피처는 원본 수치 피처, `Sex` one-hot encoding, `Volume`, `Density`, 
 
 현재 best modeling 후보는 `v2_hgb_log_leaf45_clip`이며 OOF RMSLE는 `0.149828`입니다.
 
+## 순위 개선 실험 결과
+
+Public 상위권 풀이에서 효과가 컸던 target encoding, UCI 원본 데이터 추가, boosting ensemble을 순차적으로 적용했습니다. target encoding은 validation 누수를 막기 위해 각 fold의 train split에서만 mapping을 학습합니다.
+
+| 실험 | 설명 | OOF RMSLE | 제출 파일 |
+| --- | --- | ---: | --- |
+| `v2_hgb_log_leaf45_clip` | 기존 HGBR best | 0.149828 | `submissions/submission_v2_hgb_log_leaf45_clip.csv` |
+| `v2_lgbm_log` | v2 + LGBM log target | 0.149206 | - |
+| `v2_te_lgbm_log` | v2 + target encoding + LGBM | 0.147765 | `submissions/submission_v3_lgbm_target_encoding.csv` |
+| `v2_te_lgbm_log_external` | UCI 원본 4,177건 fold train 결합 | 0.147607 | `submissions/submission_v4_lgbm_te_external.csv` |
+| `equal_linear` | LGBM/XGBoost/CatBoost 1:1:1 평균 | 0.147529 | `submissions/submission_v5_boosting_ensemble.csv` |
+
 ## 최종 모델 구성
 
-최종 submission은 `04_modeling.ipynb`에서 가장 좋은 CV 성능을 보인 `v2_hgb_log_leaf45_clip` 설정을 사용합니다.
+현재 최종 submission 후보는 `08_boosting_ensemble.py`에서 만든 `equal_linear` 앙상블입니다.
 
-- feature set: v2, 39개 학습 피처
-- estimator: `HistGradientBoostingRegressor`
+- feature set: v2 39개 피처 + fold-safe target encoding 피처
+- external data: UCI Abalone 원본 4,177건을 fold train에만 결합
+- estimator: `LGBMRegressor`, `XGBRegressor`, `CatBoostRegressor`
 - target transform: `log1p(Rings)`로 학습 후 `expm1`로 복원
-- selected params: `learning_rate=0.035`, `max_iter=600`, `max_leaf_nodes=45`, `min_samples_leaf=30`, `l2_regularization=0.04`
-- outlier handling: train fold 기준 quantile clipping 0.5%~99.5%
+- ensemble: 세 모델 예측값의 단순 평균
 - validation 기준: `Rings` quantile bin 기반 `StratifiedKFold`, 동일한 5-fold RMSLE에서 mean/std와 OOF RMSLE를 함께 확인
 - prediction post-processing: RMSLE 계산과 제출 안정성을 위해 음수 예측은 0 이상으로 clipping
 
@@ -199,14 +252,17 @@ Permutation importance는 어떤 피처가 validation 성능에 실제로 기여
 
 ## 현재 submission
 
-`05_submission.ipynb`에서 최종 모델을 전체 train에 재학습해 제출 파일을 생성했습니다.
+현재 생성된 제출 파일은 아래와 같습니다.
 
 | 파일 | rows | columns | 설명 |
 | --- | ---: | --- | --- |
-| `submissions/submission_v2_hgb_log_leaf45_clip.csv` | 60,411 | `id`, `Rings` | Kaggle 제출용 예측 파일 |
+| `submissions/submission_v2_hgb_log_leaf45_clip.csv` | 60,411 | `id`, `Rings` | 기존 HGBR 제출 파일 |
+| `submissions/submission_v3_lgbm_target_encoding.csv` | 60,411 | `id`, `Rings` | target encoding + LGBM |
+| `submissions/submission_v4_lgbm_te_external.csv` | 60,411 | `id`, `Rings` | target encoding + UCI 원본 데이터 + LGBM |
+| `submissions/submission_v5_boosting_ensemble.csv` | 60,411 | `id`, `Rings` | LGBM/XGBoost/CatBoost 1:1:1 앙상블 |
 
 제출 파일은 `sample_submission.csv`와 동일한 id 순서를 유지하며, 예측값에는 결측/무한대/음수 값이 없습니다.
 
 ## 다음 작업
 
-Kaggle에 `submissions/submission_v2_hgb_log_leaf45_clip.csv`를 제출한 뒤 public score를 기록합니다. 이후 개선은 public/private gap을 보며 feature v3, HGBR 추가 튜닝, 다른 부스팅 모델 비교 순서로 진행하면 됩니다.
+Kaggle에는 우선 `submissions/submission_v5_boosting_ensemble.csv`를 제출해 public score를 기록합니다. 이후 public/private gap을 보며 Optuna 튜닝, target encoding smoothing/rounding, 제출 로그 테이블 정리 순서로 진행합니다.

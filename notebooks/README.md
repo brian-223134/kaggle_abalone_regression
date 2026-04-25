@@ -19,6 +19,9 @@
 | `03_baseline.ipynb` | 작성됨 | v1 feature dataset 기준 baseline 모델 비교 | best baseline: `HistGradientBoosting_log_target`, OOF RMSLE `0.149919` |
 | `04_modeling.ipynb` | 작성됨 | v2 feature dataset 생성 및 HGBR tuning | best modeling: `v2_hgb_log_leaf45_clip`, OOF RMSLE `0.149828` |
 | `05_submission.ipynb` | 작성됨 | 최종 모델 재학습 및 Kaggle 제출 파일 생성 | `../submissions/submission_v2_hgb_log_leaf45_clip.csv` |
+| `06_target_encoding_lgbm.py` | 작성됨 | high-cardinality target encoding + LGBM 비교 | best OOF RMSLE `0.147765`, `../submissions/submission_v3_lgbm_target_encoding.csv` |
+| `07_external_data_lgbm.py` | 작성됨 | UCI 원본 데이터 결합 후 LGBM 재평가 | best OOF RMSLE `0.147607`, `../submissions/submission_v4_lgbm_te_external.csv` |
+| `08_boosting_ensemble.py` | 작성됨 | LGBM/XGBoost/CatBoost OOF ensemble | best OOF RMSLE `0.147529`, `../submissions/submission_v5_boosting_ensemble.csv` |
 
 `01_eda.ipynb`에서 확인한 다음 모델링 방향은 아래와 같습니다.
 
@@ -160,6 +163,70 @@ Modeling 결과:
 | --- | ---: | --- | --- |
 | `../submissions/submission_v2_hgb_log_leaf45_clip.csv` | 60,411 | `id`, `Rings` | Kaggle 제출용 예측 파일 |
 
+### 6. `06_target_encoding_lgbm.py`
+
+Public 8등 풀이의 핵심 아이디어를 검증하기 위해 `Shell_weight`, `Height`, `Whole_weight`, `Viscera_weight`, `Sex` 기반 target mean encoding을 추가하고 LGBM으로 평가합니다.
+
+중요한 구현 원칙:
+
+- target encoding mapping은 각 CV fold의 train split에서만 학습합니다.
+- validation fold에는 fold train에서 만든 mapping만 적용합니다.
+- `Height`는 fold train 기준 IQR alpha 2.0 fence로 clipping한 뒤 `Height_avg`를 만듭니다.
+- `Height_avg`, `Weight_avg` 결측은 `Sweight_avg`, `Viscera_weight_avg`, global mean 순서로 보정합니다.
+- 모델은 `log1p(Rings)`를 학습하고 `expm1`로 복원합니다.
+
+결과:
+
+| 실험 | CV RMSLE mean | CV RMSLE std | OOF RMSLE | 제출 파일 |
+| --- | ---: | ---: | ---: | --- |
+| `v2_lgbm_log` | 0.149204 | 0.000754 | 0.149206 | - |
+| `v2_te_lgbm_log` | 0.147764 | 0.000631 | 0.147765 | `../submissions/submission_v3_lgbm_target_encoding.csv` |
+
+주요 산출물:
+
+- `../data/proceed/oof_v3_lgbm_target_encoding.csv`
+- `../data/proceed/test_pred_v3_lgbm_target_encoding.csv`
+- `../data/proceed/scores_v3_lgbm_target_encoding.csv`
+
+### 7. `07_external_data_lgbm.py`
+
+UCI 공식 Abalone 원본 데이터 4,177건을 `../data/external/abalone.data`로 내려받고, Kaggle v2와 같은 피처 스키마로 변환해 fold train에만 결합합니다. validation은 Kaggle fold validation 행에 대해서만 계산하므로 기존 CV와 비교할 수 있습니다.
+
+결과:
+
+| 실험 | CV RMSLE mean | CV RMSLE std | OOF RMSLE | 제출 파일 |
+| --- | ---: | ---: | ---: | --- |
+| `v2_te_lgbm_log_external` | 0.147606 | 0.000613 | 0.147607 | `../submissions/submission_v4_lgbm_te_external.csv` |
+
+주요 산출물:
+
+- `../data/proceed/external_uci_fe_v2.csv`
+- `../data/proceed/oof_v4_lgbm_te_external.csv`
+- `../data/proceed/test_pred_v4_lgbm_te_external.csv`
+- `../data/proceed/scores_v4_lgbm_te_external.csv`
+
+### 8. `08_boosting_ensemble.py`
+
+`07_external_data_lgbm.py`와 같은 target encoding + UCI 결합 조건에서 XGBoost와 CatBoost를 추가 학습하고, 저장된 LGBM OOF/test prediction과 함께 앙상블합니다.
+
+결과:
+
+| 실험 | OOF RMSLE |
+| --- | ---: |
+| `lgbm` | 0.147607 |
+| `xgb` | 0.147903 |
+| `cat` | 0.147773 |
+| `equal_linear` (`1/3` each) | 0.147529 |
+| `equal_log` (`1/3` each) | 0.147530 |
+
+현재 best는 `equal_linear`이며 제출 파일은 `../submissions/submission_v5_boosting_ensemble.csv`입니다.
+
+주요 산출물:
+
+- `../data/proceed/oof_v5_boosting_ensemble.csv`
+- `../data/proceed/test_pred_v5_boosting_ensemble.csv`
+- `../data/proceed/scores_v5_boosting_ensemble.csv`
+
 ## 다음 작업
 
-Kaggle에 `../submissions/submission_v2_hgb_log_leaf45_clip.csv`를 제출한 뒤 public score를 기록합니다. 이후 개선은 public/private gap을 보며 feature v3, HGBR 추가 튜닝, 다른 부스팅 모델 비교 순서로 진행하면 됩니다.
+Kaggle에는 우선 `../submissions/submission_v5_boosting_ensemble.csv`를 제출해 public score를 확인합니다. 이후 public/private gap과 CV 일관성을 보며 Optuna 튜닝, target encoding smoothing/rounding, leaderboard 기록표 업데이트 순서로 진행합니다.

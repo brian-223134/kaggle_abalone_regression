@@ -30,13 +30,19 @@ data/
 │   ├── train.csv
 │   ├── test.csv
 │   └── sample_submission.csv
+├── external/   # 외부 공개 데이터
+│   └── abalone.data
 └── proceed/    # 전처리·피처 엔지니어링 결과물 저장소
     ├── train_*.csv
     ├── test_*.csv
+    ├── external_*.csv
+    ├── oof_*.csv
+    ├── test_pred_*.csv
     └── ...
 ```
 
 - **`raw/`** — Kaggle에서 다운로드한 원본 그대로. 어떤 코드도 이 폴더의 파일을 덮어쓰지 않습니다. EDA·전처리 노트북은 항상 이 디렉터리에서 데이터를 읽어옵니다.
+- **`external/`** — UCI 원본 Abalone 데이터처럼 공개 외부 데이터를 저장합니다. Kaggle train/test 원본과 분리해 관리합니다.
 - **`proceed/`** — 결측 처리, 인코딩, 스케일링, 파생 변수 생성 등 **피처 엔지니어링이 끝난 CSV** 가 저장되는 위치입니다. 모델 학습 스크립트는 원칙적으로 이 폴더의 파일을 입력으로 사용합니다.
 
 ### `raw/` 원본 파일
@@ -46,6 +52,12 @@ data/
 | `raw/train.csv` | 90,615 | 학습용 데이터. 입력 피처 + 타깃(`Rings`) 포함 |
 | `raw/test.csv` | 60,411 | 추론용 데이터. 타깃(`Rings`) 미포함 |
 | `raw/sample_submission.csv` | 60,411 | 제출 파일 양식 (`id`, `Rings` 두 컬럼) |
+
+### `external/` 외부 데이터
+
+| 파일 | 행 수 | 설명 |
+| --- | ---: | --- |
+| `external/abalone.data` | 4,177 | UCI Machine Learning Repository의 원본 Abalone 데이터 |
 
 ### `proceed/` 가공 파일
 
@@ -59,6 +71,10 @@ data/
 | `proceed/test_fe_v1.csv` | v1 피처셋이 적용된 테스트 데이터. 60,411행, `id` + 17개 피처 |
 | `proceed/train_fe_v2.csv` | v2 피처셋이 적용된 학습 데이터. 90,615행, `id` + 39개 피처 + 타깃 `Rings` |
 | `proceed/test_fe_v2.csv` | v2 피처셋이 적용된 테스트 데이터. 60,411행, `id` + 39개 피처 |
+| `proceed/external_uci_fe_v2.csv` | UCI 원본 데이터에 v2 피처셋을 적용한 학습 보조 데이터. 4,177행 |
+| `proceed/oof_v3_lgbm_target_encoding.csv` | target encoding + LGBM OOF prediction |
+| `proceed/oof_v4_lgbm_te_external.csv` | UCI 원본 결합 LGBM OOF prediction |
+| `proceed/oof_v5_boosting_ensemble.csv` | LGBM/XGBoost/CatBoost 및 앙상블 OOF prediction |
 
 권장 명명 규칙 (추가 버전 예시):
 
