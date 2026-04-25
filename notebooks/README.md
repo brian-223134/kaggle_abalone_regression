@@ -15,6 +15,7 @@
 | 노트북 | 상태 | 목적 | 주요 산출물 |
 | --- | --- | --- | --- |
 | `01_eda.ipynb` | 작성됨 | 데이터 품질, 타깃 분포, 상관관계, 이상치, train/test drift 확인 | EDA findings, 피처 엔지니어링 후보 |
+| `02_feature_engineering.ipynb` | 작성됨 | raw CSV를 v1 feature dataset으로 변환 | `../data/proceed/train_fe_v1.csv`, `../data/proceed/test_fe_v1.csv` |
 
 `01_eda.ipynb`에서 확인한 다음 모델링 방향은 아래와 같습니다.
 
@@ -32,9 +33,9 @@
 
 ### 2. `02_feature_engineering.ipynb`
 
-다음에 만드는 것이 가장 좋습니다. `data/README.md`에 설명된 `../data/proceed/` 폴더를 실제로 채우는 노트북입니다.
+작성 완료된 피처 생성 노트북입니다. `data/README.md`에 설명된 `../data/proceed/` 폴더를 실제로 채웁니다.
 
-권장 작업:
+수행 작업:
 
 - `../data/raw/train.csv`, `../data/raw/test.csv` 로드
 - 컬럼 rename
@@ -59,7 +60,20 @@
   - `../data/proceed/train_fe_v1.csv`
   - `../data/proceed/test_fe_v1.csv`
 
-이 노트북은 모델 성능을 직접 평가하기보다, 재사용 가능한 첫 번째 feature dataset을 만드는 데 집중하는 것이 좋습니다.
+이 노트북은 모델 성능을 직접 평가하기보다, 재사용 가능한 첫 번째 feature dataset을 만드는 데 집중합니다.
+
+생성된 v1 feature dataset:
+
+| 파일 | shape | 설명 |
+| --- | ---: | --- |
+| `../data/proceed/train_fe_v1.csv` | 90,615 x 19 | `id` + 17개 피처 + `Rings` |
+| `../data/proceed/test_fe_v1.csv` | 60,411 x 18 | `id` + 17개 피처 |
+
+v1 피처 구성:
+
+- 원본 수치 피처 7개: `Length`, `Diameter`, `Height`, `Whole_weight`, `Shucked_weight`, `Viscera_weight`, `Shell_weight`
+- 파생 피처 7개: `Height_is_zero`, `Volume`, `Density`, `Shucked_ratio`, `Viscera_ratio`, `Shell_ratio`, `Shell_to_shucked`
+- 범주형 인코딩 3개: `Sex_F`, `Sex_I`, `Sex_M`
 
 ### 3. `03_baseline.ipynb`
 
@@ -103,4 +117,4 @@ baseline 이후 성능 개선 실험을 모읍니다.
 
 ## 다음 작업
 
-바로 다음에는 `02_feature_engineering.ipynb`를 생성해 `../data/proceed/train_fe_v1.csv`와 `../data/proceed/test_fe_v1.csv`를 만드는 것이 좋습니다. 그래야 baseline 노트북이 원본 CSV를 매번 다시 가공하지 않고, 고정된 feature dataset을 기준으로 모델 성능을 비교할 수 있습니다.
+바로 다음에는 `03_baseline.ipynb`를 생성하는 것이 좋습니다. `../data/proceed/train_fe_v1.csv`와 `../data/proceed/test_fe_v1.csv`가 준비되었으므로, 이제 고정된 feature dataset을 기준으로 RMSLE baseline을 측정할 수 있습니다.
