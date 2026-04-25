@@ -1,0 +1,7 @@
+experiment,fold,rmsle,best_iteration,rmsle_std,oof_rmsle,fit_seconds
+v2_te_lgbm_log_external,1,0.146798240705359,214,,,
+v2_te_lgbm_log_external,2,0.14720817267336053,209,,,
+v2_te_lgbm_log_external,3,0.1478950826590786,234,,,
+v2_te_lgbm_log_external,4,0.14753241257248562,192,,,
+v2_te_lgbm_log_external,5,0.14859586227856197,222,,,
+v2_te_lgbm_log_external,mean,0.14760595417776914,214,0.0006131154659914739,0.14760722753071517,12.829897020000317
