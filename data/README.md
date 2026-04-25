@@ -49,24 +49,50 @@ data/
 
 ### `proceed/` 가공 파일
 
-피처 엔지니어링 단계에서 생성되는 산출물을 저장합니다. 아직 비어 있으며, 작업이 진행되면서 채워집니다.
+피처 엔지니어링 단계에서 생성되는 산출물을 저장합니다. 현재 `02_feature_engineering.ipynb` 실행 결과로 v1 피처셋이, `04_modeling.ipynb` 실행 결과로 v2 피처셋이 생성되어 있습니다.
 
-권장 명명 규칙 (예시):
+현재 생성된 파일:
 
 | 파일 | 설명 |
 | --- | --- |
-| `proceed/train_fe_v1.csv` | v1 피처셋이 적용된 학습 데이터 (타깃 `Rings` 포함) |
-| `proceed/test_fe_v1.csv` | v1 피처셋이 적용된 테스트 데이터 (타깃 없음) |
-| `proceed/train_fe_v2.csv` | 추가 피처/다른 인코딩 등 v2 학습 데이터 |
-| `proceed/test_fe_v2.csv` | v2 테스트 데이터 |
+| `proceed/train_fe_v1.csv` | v1 피처셋이 적용된 학습 데이터. 90,615행, `id` + 17개 피처 + 타깃 `Rings` |
+| `proceed/test_fe_v1.csv` | v1 피처셋이 적용된 테스트 데이터. 60,411행, `id` + 17개 피처 |
+| `proceed/train_fe_v2.csv` | v2 피처셋이 적용된 학습 데이터. 90,615행, `id` + 39개 피처 + 타깃 `Rings` |
+| `proceed/test_fe_v2.csv` | v2 피처셋이 적용된 테스트 데이터. 60,411행, `id` + 39개 피처 |
 
-가공 파일에 일반적으로 포함되는 변환 예:
+권장 명명 규칙 (추가 버전 예시):
 
-- `Sex` 의 one-hot 인코딩 (`Sex_M`, `Sex_F`, `Sex_I`) 또는 ordinal 인코딩
+| 파일 | 설명 |
+| --- | --- |
+| `proceed/train_fe_v3.csv` | 추가 피처/다른 인코딩 등 v3 학습 데이터 |
+| `proceed/test_fe_v3.csv` | v3 테스트 데이터 |
+
+v1 가공 파일에 포함된 변환:
+
+- `Sex` 의 one-hot 인코딩 (`Sex_F`, `Sex_I`, `Sex_M`)
 - `Whole weight.1`, `Whole weight.2` 등 헷갈리는 컬럼명을 `Shucked_weight`, `Viscera_weight` 로 rename
-- 파생 변수: `Volume = Length × Diameter × Height`, `Meat_ratio = Shucked_weight / Whole_weight`, `Shell_ratio = Shell_weight / Whole_weight` 등
-- 이상치 처리(`Height = 0` 행 등) 결과
-- 로그 변환 등 분포 보정 (`log1p(Rings)` 등)
+- 파생 변수: `Volume = Length × Diameter × Height`, `Density = Whole_weight / Volume`
+- 무게 비율: `Shucked_ratio`, `Viscera_ratio`, `Shell_ratio`, `Shell_to_shucked`
+- 이상치 보조 피처: `Height_is_zero`
+- 파생 피처에서 발생한 결측/무한대 값은 train 기준 median으로 대체
+
+v2 가공 파일에 추가로 포함된 변환:
+
+- shape 피처: `Area`, `Diameter_to_Length`, `Height_to_Length`, `Height_to_Diameter`
+- component balance 피처: `Component_weight_sum`, `Component_sum_ratio`, `Residual_weight`, `Residual_weight_ratio`
+- 추가 비율 피처: `Whole_weight_to_Length`, `Whole_weight_to_Area`, `Whole_weight_to_Volume`, `Shucked_to_Shell`, `Viscera_to_Shell`
+- 로그 피처: `log1p_Length`, `log1p_Diameter`, `log1p_Height`, `log1p_Whole_weight`, `log1p_Shucked_weight`, `log1p_Viscera_weight`, `log1p_Shell_weight`, `log1p_Volume`, `log1p_Density`
+- 파생 피처에서 발생한 결측/무한대 값은 train 기준 median으로 대체
+
+아직 적용하지 않은 후보 변환:
+
+- feature file 자체의 이상치 제거 또는 clipping
+- 추가 feature version(`train_fe_v3.csv`, `test_fe_v3.csv`)
+
+모델링 단계에서 별도로 적용한 변환:
+
+- `log1p(Rings)` 타깃 변환 후 `expm1` 복원
+- fold별 train split에서 학습한 quantile clipping (`0.5%`~`99.5%`) pipeline
 
 > **재현성 메모**: 새로운 피처셋을 만들 때마다 버전 suffix(`_v1`, `_v2`, ...)를 붙이고, 어떤 변환을 적용했는지 노트북/스크립트에 함께 기록해 두는 것을 권장합니다.
 
