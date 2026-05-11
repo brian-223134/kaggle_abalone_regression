@@ -22,7 +22,7 @@ brew install libomp
 
 ## 재현 방법
 
-원본 Kaggle CSV는 `data/raw/`에 두고, UCI 원본 데이터는 `data/external/abalone.data`에 둔 상태에서 아래 순서로 실행합니다. `01`~`05`는 노트북이고, `06`~`08`은 반복 실행과 산출물 저장을 쉽게 하기 위한 Python percent-format 스크립트입니다.
+원본 Kaggle CSV는 `data/raw/`에 두고, UCI 원본 데이터는 `data/external/abalone.data`에 둔 상태에서 아래 순서로 실행합니다. `01` ~ `05`는 Jupyter Notebook이고, `06` ~ `08`은 반복 실행과 산출물 저장을 쉽게 하기 위한 Python percent-format 스크립트입니다.
 
 1. `notebooks/01_eda.ipynb`: 원본 데이터 품질, 타깃 분포, 상관관계, 이상치, train/test drift 확인
 2. `notebooks/02_feature_engineering.ipynb`: v1 feature dataset 생성
