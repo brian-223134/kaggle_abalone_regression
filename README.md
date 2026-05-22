@@ -4,7 +4,7 @@ Kaggle Playground Series S4E4 Abalone 데이터셋으로 `Rings`를 예측하는
 
 최종적으로는 초기 HGBR 단일 모델의 OOF RMSLE `0.149828`에서, target encoding, UCI 원본 데이터 추가, LGBM/XGBoost/CatBoost 앙상블을 거쳐 OOF RMSLE `0.147529`까지 개선했습니다.
 
-발표 준비용 서술 자료는 [PRESENTATION.md](./PRESENTATION.md)에 정리했습니다.
+발표 준비용 서술 자료는 [docs/PRESENTATION.md](./docs/PRESENTATION.md)에, 최종 발표용 슬라이드 명세는 [docs/FINAL_PRESENTATION.md](./docs/FINAL_PRESENTATION.md)에 정리했습니다.
 
 ## 환경 세팅 방법
 
@@ -83,7 +83,11 @@ abalone-regression/
 │   ├── submission_v3_lgbm_target_encoding.csv
 │   ├── submission_v4_lgbm_te_external.csv
 │   └── submission_v5_boosting_ensemble.csv
-├── PRESENTATION.md
+├── docs/
+│   ├── PRESENTATION.md
+│   ├── FINAL_PRESENTATION.md
+│   ├── Abalone_Regression_발표자료_초안.pptx
+│   └── Basic_6조_프로젝트 중간발표.pptx
 ├── requirements.txt
 └── README.md
 ```
